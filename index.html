@@ -282,11 +282,13 @@ function loadState(){
   if(!state.quiz)state.quiz={score:0,streak:0,bestStreak:0,total:0,correct:0};
   // update day streak
   const today=new Date().toDateString();
-  if(state.lastDay&&state.lastDay!==today){
+  if(!state.lastDay){
+    state.dayStreak=1; // first visit
+  }else if(state.lastDay!==today){
     const last=new Date(state.lastDay),now=new Date(today);
     const diff=Math.round((now-last)/(1000*60*60*24));
     if(diff===1)state.dayStreak=(state.dayStreak||0)+1;
-    else if(diff>1)state.dayStreak=0;
+    else if(diff>1)state.dayStreak=1; // reset but count today
   }
   state.lastDay=today;
   saveState();
@@ -449,13 +451,14 @@ function flipCard(){
 function flyCard(dir){
   if(!currentCard||isAnimating)return;
   isAnimating=true;
-  cardEl.classList.add(dir==='right'?'fly-right':'fly-left');
+  const el=document.getElementById('activeCard');
+  if(el)el.classList.add(dir==='right'?'fly-right':'fly-left');
 
   const cs=getCardState(currentCard.id);
   if(dir==='right'){
     cs.interval=Math.min(cs.interval*2,64);
     cs.nextReview=Date.now()+cs.interval*24*60*60*1000;
-    cs.mastered=cs.interval>=4;
+    cs.mastered=cs.interval>=2; // mastered after first confident swipe
   }else{
     cs.interval=1;
     cs.nextReview=Date.now()+60*1000; // come back in 1 min
@@ -467,6 +470,7 @@ function flyCard(dir){
     deck.shift();
     isAnimating=false;
     showNextCard();
+    updateProgress();
   },350);
 }
 
@@ -633,6 +637,12 @@ function renderProgressTab(){
 
 // ─── TABS ───
 function switchTab(el){
+  // Accept string or DOM element
+  if(typeof el==='string'){
+    el=document.querySelector(`.tab[data-tab="panel${el.charAt(0).toUpperCase()+el.slice(1)}"]`)||
+       document.querySelector(`.tab[data-tab="${el}"]`);
+    if(!el)return;
+  }
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
   el.classList.add('active');
