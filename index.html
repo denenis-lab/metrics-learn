@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Metrics Learn</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+--bg:#1a1a2e;--card:#16213e;--card-light:#1a2744;
+--green:#0f9b58;--red:#e74c3c;--text:#e0e0e0;--heading:#fff;
+--cat-revenue:#4ecdc4;--cat-profit:#f7dc6f;--cat-users:#bb8fce;
+--cat-startup:#e59866;--cat-data:#85c1e9;--cat-rental:#82e0aa;
+--cat-invest:#f1948a;--cat-market:#aeb6bf;
+}
+html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text)}
+.app{max-width:440px;margin:0 auto;height:100%;display:flex;flex-direction:column;position:relative;overflow:hidden}
+
+/* Progress bar */
+.progress-bar-wrap{padding:12px 16px 0;flex-shrink:0}
+.progress-bar{height:6px;background:#0d1b2a;border-radius:3px;overflow:hidden}
+.progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--green),#4ecdc4);border-radius:3px;transition:width .4s ease}
+.progress-label{font-size:11px;color:#888;margin-top:4px;text-align:center}
+
+/* Header */
+.header{padding:8px 16px;text-align:center;flex-shrink:0}
+.header h1{font-size:18px;font-weight:700;color:var(--heading)}
+
+/* Main content area */
+.tab-content{flex:1;position:relative;overflow:hidden}
+.tab-panel{position:absolute;inset:0;display:none;flex-direction:column}
+.tab-panel.active{display:flex}
+
+/* Cards mode */
+.cards-area{flex:1;position:relative;display:flex;align-items:center;justify-content:center;padding:16px;overflow:hidden}
+.card-container{position:relative;width:100%;max-width:360px;height:420px}
+.card{position:absolute;width:100%;height:100%;border-radius:20px;background:var(--card);box-shadow:0 8px 32px rgba(0,0,0,.4);cursor:grab;touch-action:none;user-select:none;perspective:1000px;will-change:transform}
+.card.dragging{cursor:grabbing;transition:none!important}
+.card.fly-left{transition:transform .4s ease,opacity .3s ease;transform:translateX(-150%) rotate(-30deg)!important;opacity:0}
+.card.fly-right{transition:transform .4s ease,opacity .3s ease;transform:translateX(150%) rotate(30deg)!important;opacity:0}
+.card.fly-reset{transition:transform .3s cubic-bezier(.175,.885,.32,1.275)}
+
+.card-inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform .5s cubic-bezier(.4,0,.2,1);border-radius:20px}
+.card.flipped .card-inner{transform:rotateY(180deg)}
+.card-face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:20px;padding:32px 24px;display:flex;flex-direction:column;overflow-y:auto}
+.card-back{transform:rotateY(180deg);background:var(--card-light)}
+
+/* Card front */
+.card-category{display:inline-block;padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;margin-bottom:auto;align-self:flex-start}
+.card-front .metric-name{font-size:32px;font-weight:800;color:var(--heading);line-height:1.2;margin:auto 0;text-align:center}
+.card-front .tap-hint{font-size:12px;color:#666;text-align:center;margin-top:auto}
+
+/* Card back */
+.card-back .metric-name-sm{font-size:18px;font-weight:700;color:var(--heading);margin-bottom:4px}
+.card-back .metric-full{font-size:13px;color:#aaa;margin-bottom:16px}
+.card-back .definition{font-size:15px;line-height:1.6;margin-bottom:20px;color:var(--text)}
+.card-back .example{font-size:13px;line-height:1.5;color:#aaa;background:rgba(0,0,0,.2);padding:14px;border-radius:12px;border-left:3px solid var(--green)}
+
+/* Overlay indicators */
+.card-overlay{position:absolute;inset:0;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:64px;font-weight:900;opacity:0;pointer-events:none;z-index:10;transition:opacity .1s}
+.card-overlay.like{background:rgba(15,155,88,.15);color:var(--green);border:3px solid var(--green)}
+.card-overlay.nope{background:rgba(231,76,60,.15);color:var(--red);border:3px solid var(--red)}
+
+/* Buttons */
+.card-buttons{display:flex;justify-content:center;gap:24px;padding:16px;flex-shrink:0}
+.card-btn{width:64px;height:64px;border-radius:50%;border:2px solid;display:flex;align-items:center;justify-content:center;font-size:28px;background:transparent;cursor:pointer;transition:transform .15s,background .15s}
+.card-btn:active{transform:scale(.9)}
+.card-btn.nope{border-color:var(--red);color:var(--red)}
+.card-btn.nope:hover{background:rgba(231,76,60,.15)}
+.card-btn.like{border-color:var(--green);color:var(--green)}
+.card-btn.like:hover{background:rgba(15,155,88,.15)}
+
+.empty-state{text-align:center;color:#666;padding:40px;display:none;flex-direction:column;align-items:center;gap:16px}
+.empty-state.visible{display:flex}
+.empty-state .emoji{font-size:48px}
+.reset-deck-btn{padding:12px 28px;border-radius:12px;background:var(--green);color:#fff;border:none;font-size:15px;font-weight:600;cursor:pointer}
+.reset-deck-btn:active{transform:scale(.95)}
+
+/* Quiz mode */
+.quiz-area{flex:1;display:flex;flex-direction:column;padding:16px;overflow-y:auto}
+.quiz-header{display:flex;justify-content:space-between;margin-bottom:16px;font-size:14px}
+.quiz-streak{color:var(--green);font-weight:700}
+.quiz-score{color:#aaa}
+.quiz-question{background:var(--card);border-radius:16px;padding:24px;margin-bottom:20px;min-height:120px;display:flex;flex-direction:column;justify-content:center}
+.quiz-question .q-label{font-size:12px;color:#888;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px}
+.quiz-question .q-text{font-size:18px;font-weight:600;color:var(--heading);line-height:1.5}
+.quiz-options{display:flex;flex-direction:column;gap:10px}
+.quiz-opt{padding:16px 20px;border-radius:14px;background:var(--card);border:2px solid transparent;font-size:15px;color:var(--text);cursor:pointer;transition:all .2s;text-align:left;line-height:1.4}
+.quiz-opt:active{transform:scale(.97)}
+.quiz-opt.correct{border-color:var(--green);background:rgba(15,155,88,.15);color:var(--green)}
+.quiz-opt.wrong{border-color:var(--red);background:rgba(231,76,60,.15);color:var(--red)}
+.quiz-opt.dimmed{opacity:.4}
+.quiz-next{margin-top:20px;padding:14px;border-radius:14px;background:var(--green);color:#fff;border:none;font-size:16px;font-weight:600;cursor:pointer;display:none}
+.quiz-next.visible{display:block}
+.quiz-next:active{transform:scale(.97)}
+
+/* Progress mode */
+.progress-area{flex:1;padding:16px;overflow-y:auto;padding-bottom:80px}
+.stat-card{background:var(--card);border-radius:16px;padding:20px;margin-bottom:12px}
+.stat-card h3{font-size:14px;color:#aaa;margin-bottom:12px;text-transform:uppercase;letter-spacing:1px}
+.stat-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.stat-row .label{font-size:14px;display:flex;align-items:center;gap:8px}
+.stat-row .cat-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.stat-row .bar-wrap{flex:1;height:8px;background:#0d1b2a;border-radius:4px;margin:0 12px;overflow:hidden}
+.stat-row .bar-fill{height:100%;border-radius:4px;transition:width .4s}
+.stat-row .val{font-size:13px;color:#aaa;min-width:36px;text-align:right}
+.big-stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.big-stat{background:var(--card);border-radius:16px;padding:20px;text-align:center}
+.big-stat .num{font-size:36px;font-weight:800;color:var(--heading)}
+.big-stat .lbl{font-size:12px;color:#888;margin-top:4px}
+.reset-btn{width:100%;padding:14px;border-radius:14px;background:var(--red);color:#fff;border:none;font-size:15px;font-weight:600;cursor:pointer;margin-top:8px;opacity:.7}
+.reset-btn:active{transform:scale(.97)}
+
+/* Tab bar */
+.tab-bar{display:flex;background:#0f0f23;border-top:1px solid #1e1e3a;flex-shrink:0;padding-bottom:env(safe-area-inset-bottom)}
+.tab{flex:1;padding:10px 0;text-align:center;cursor:pointer;transition:color .2s}
+.tab .tab-icon{font-size:22px;display:block;margin-bottom:2px}
+.tab .tab-label{font-size:10px;letter-spacing:.5px}
+.tab.active{color:var(--green)}
+.tab:not(.active){color:#555}
+
+/* Animations */
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+.pulse{animation:pulse .15s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.shake{animation:shake .3s ease}
+
+/* Filter chips */
+.filter-chips{display:flex;gap:6px;padding:0 16px 8px;overflow-x:auto;flex-shrink:0;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.filter-chips::-webkit-scrollbar{display:none}
+.chip{padding:5px 12px;border-radius:20px;font-size:11px;white-space:nowrap;cursor:pointer;border:1.5px solid #333;color:#888;transition:all .2s;flex-shrink:0}
+.chip.active{border-color:var(--green);color:var(--green);background:rgba(15,155,88,.1)}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="progress-bar-wrap">
+    <div class="progress-bar"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="progress-label" id="progressLabel">0 / 35 изучено</div>
+  </div>
+
+  <div class="header"><h1>Metrics Learn</h1></div>
+
+  <div class="filter-chips" id="filterChips"></div>
+
+  <div class="tab-content">
+    <!-- Cards -->
+    <div class="tab-panel active" id="panelCards">
+      <div class="cards-area">
+        <div class="card-container" id="cardContainer"></div>
+        <div class="empty-state" id="emptyState">
+          <div class="emoji">&#127881;</div>
+          <div style="font-size:18px;color:var(--heading);font-weight:700">Все карточки пройдены!</div>
+          <div style="font-size:14px">Вернитесь позже или сбросьте колоду</div>
+          <button class="reset-deck-btn" onclick="resetDeck()">Начать заново</button>
+        </div>
+      </div>
+      <div class="card-buttons" id="cardButtons">
+        <button class="card-btn nope" onclick="swipeAction('left')">&#10007;</button>
+        <button class="card-btn like" onclick="swipeAction('right')">&#10003;</button>
+      </div>
+    </div>
+
+    <!-- Quiz -->
+    <div class="tab-panel" id="panelQuiz">
+      <div class="quiz-area">
+        <div class="quiz-header">
+          <span class="quiz-streak" id="quizStreak">&#128293; Серия: 0</span>
+          <span class="quiz-score" id="quizScore">Счёт: 0</span>
+        </div>
+        <div class="quiz-question">
+          <div class="q-label" id="qLabel">Определение</div>
+          <div class="q-text" id="qText">Загрузка...</div>
+        </div>
+        <div class="quiz-options" id="quizOptions"></div>
+        <button class="quiz-next" id="quizNext" onclick="nextQuizQuestion()">Следующий</button>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="tab-panel" id="panelProgress">
+      <div class="progress-area" id="progressArea"></div>
+    </div>
+  </div>
+
+  <div class="tab-bar">
+    <div class="tab active" data-tab="panelCards" onclick="switchTab(this)">
+      <span class="tab-icon">&#128195;</span>
+      <span class="tab-label">Карточки</span>
+    </div>
+    <div class="tab" data-tab="panelQuiz" onclick="switchTab(this)">
+      <span class="tab-icon">&#128300;</span>
+      <span class="tab-label">Квиз</span>
+    </div>
+    <div class="tab" data-tab="panelProgress" onclick="switchTab(this)">
+      <span class="tab-icon">&#128200;</span>
+      <span class="tab-label">Прогресс</span>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── DATA ───
+const CATEGORIES = {
+  'Revenue & Growth':   {color:'#4ecdc4',emoji:'💰'},
+  'Profitability':      {color:'#f7dc6f',emoji:'📊'},
+  'Users & Retention':  {color:'#bb8fce',emoji:'👥'},
+  'Startup':            {color:'#e59866',emoji:'🔥'},
+  'Data Quality':       {color:'#85c1e9',emoji:'📈'},
+  'Rental Yield':       {color:'#82e0aa',emoji:'🏠'},
+  'Investment Returns': {color:'#f1948a',emoji:'💎'},
+  'Market':             {color:'#aeb6bf',emoji:'🏗️'}
+};
+
+const METRICS = [
+  {id:'revenue',name:'Revenue',cat:'Revenue & Growth',full:'Выручка',def:'Общий объём денежных средств от реализации продукта.',ex:'Продали подписок на $10M за месяц → Revenue = $10M. Это не прибыль — расходы ещё не вычтены.'},
+  {id:'arpu',name:'ARPU',cat:'Revenue & Growth',full:'Average Revenue Per User',def:'Средний доход на пользователя.',ex:'100K пользователей, Revenue $1M → ARPU = $10'},
+  {id:'mrr',name:'MRR',cat:'Revenue & Growth',full:'Monthly Recurring Revenue',def:'Ежемесячная повторяющаяся выручка.',ex:'10K подписчиков × $10 = MRR $100K'},
+  {id:'nrr',name:'NRR',cat:'Revenue & Growth',full:'Net Revenue Retention',def:'Чистое удержание выручки. Учитывает апгрейды и даунгрейды.',ex:'NRR 110% — существующие клиенты платят на 10% больше YoY'},
+  {id:'gross_margin',name:'Gross Margin',cat:'Profitability',full:'Валовая маржа',def:'(Revenue - COGS) / Revenue.',ex:'Revenue $10M, COGS $3M → GM = 70%'},
+  {id:'net_margin',name:'Net Margin',cat:'Profitability',full:'Чистая маржа',def:'Net Profit / Revenue.',ex:'Revenue $10M, Net Profit $1.5M → NM = 15%'},
+  {id:'ebitda',name:'EBITDA',cat:'Profitability',full:'Прибыль до вычета процентов, налогов, амортизации',def:'Показывает операционную эффективность.',ex:'Revenue $10M, OpEx $7M, D&A $1M → EBITDA = $4M'},
+  {id:'contribution_margin',name:'Contribution Margin',cat:'Profitability',full:'Маржинальная прибыль на единицу',def:'Revenue per unit - Variable costs per unit.',ex:'Подписка $10/мес, переменные $3 → CM = $7'},
+  {id:'ltv',name:'LTV',cat:'Users & Retention',full:'Lifetime Value',def:'Сколько приносит клиент за всё время.',ex:'ARPU $10/мес × 24 мес retention = LTV $240'},
+  {id:'cac',name:'CAC',cat:'Users & Retention',full:'Customer Acquisition Cost',def:'Стоимость привлечения клиента.',ex:'$100K на маркетинг / 1000 новых = CAC $100'},
+  {id:'ltv_cac',name:'LTV/CAC Ratio',cat:'Users & Retention',full:'Соотношение ценности к стоимости привлечения',def:'Здоровый бизнес: LTV/CAC > 3.',ex:'LTV $240 / CAC $100 = 2.4 — нужно снижать CAC'},
+  {id:'churn',name:'Churn Rate',cat:'Users & Retention',full:'Доля ушедших клиентов за период',def:'Доля клиентов, прекративших пользоваться продуктом.',ex:'1000 клиентов, 50 ушли → Churn = 5%/мес'},
+  {id:'retention',name:'Retention Rate',cat:'Users & Retention',full:'Доля оставшихся клиентов',def:'1 - Churn. Показывает, сколько клиентов остаётся.',ex:'Churn 5% → Retention 95%'},
+  {id:'cohort',name:'Cohort Retention',cat:'Users & Retention',full:'Удержание по когортам',def:'Как ведут себя группы клиентов, пришедшие в одно время.',ex:'Когорта Января — через 3 мес осталось 60%, через 6 мес — 40%'},
+  {id:'burn',name:'Burn Rate',cat:'Startup',full:'Скорость сжигания денег',def:'Сколько компания тратит в месяц сверх дохода.',ex:'Revenue $200K, расходы $350K → Burn Rate = $150K/мес'},
+  {id:'runway',name:'Runway',cat:'Startup',full:'Запас прочности',def:'Сколько месяцев компания проживёт на текущих запасах. Cash / Burn Rate.',ex:'$3M на счету / $150K burn = 20 мес'},
+  {id:'payback',name:'Payback Period',cat:'Startup',full:'Срок окупаемости привлечения клиента',def:'CAC / (ARPU × Margin).',ex:'CAC $100, ARPU $10, Margin 70% → PP = 14.3 мес'},
+  {id:'completeness',name:'Data Completeness',cat:'Data Quality',full:'Полнота данных',def:'Процент заполненных полей.',ex:'95% строк имеют email → completeness 95%'},
+  {id:'freshness',name:'Data Freshness',cat:'Data Quality',full:'Свежесть данных',def:'Время от события до появления в хранилище.',ex:'Freshness = 2 часа (данные обновляются каждые 2ч)'},
+  {id:'drift',name:'Data Drift',cat:'Data Quality',full:'Дрейф данных',def:'Изменение распределения данных со временем.',ex:'Средний чек вырос с $50 до $80 за квартал — drift detected'},
+  {id:'gross_yield',name:'Gross Rental Yield',cat:'Rental Yield',full:'Валовая доходность аренды',def:'(Годовая аренда / Цена покупки) × 100%.',ex:'Аренда $24K/год, покупка $400K → yield = 6%'},
+  {id:'net_yield',name:'Net Rental Yield',cat:'Rental Yield',full:'Чистая доходность аренды',def:'(Аренда - расходы) / Цена × 100%.',ex:'($24K - $6K) / $400K = 4.5%'},
+  {id:'cap_rate',name:'Cap Rate',cat:'Rental Yield',full:'Ставка капитализации',def:'NOI / Market Value.',ex:'NOI $18K / $400K = 4.5%'},
+  {id:'vacancy',name:'Vacancy Rate',cat:'Rental Yield',full:'Доля пустующих объектов',def:'Процент незанятых объектов недвижимости.',ex:'10 из 200 квартир пустуют → vacancy = 5%'},
+  {id:'grm',name:'GRM',cat:'Rental Yield',full:'Gross Rent Multiplier',def:'Цена / Годовая аренда. Сколько лет аренда окупит покупку.',ex:'$400K / $24K = 16.7 лет'},
+  {id:'npv',name:'NPV',cat:'Investment Returns',full:'Net Present Value',def:'Чистая приведённая стоимость. Сумма дисконтированных денежных потоков.',ex:'Инвестиция $400K, потоки по $25K/год 20 лет, ставка 5% → NPV = -$88K'},
+  {id:'irr',name:'IRR',cat:'Investment Returns',full:'Internal Rate of Return',def:'Ставка, при которой NPV = 0.',ex:'IRR = 8% — проект даёт 8% годовых'},
+  {id:'roi',name:'ROI',cat:'Investment Returns',full:'Return on Investment',def:'(Gain - Cost) / Cost × 100%.',ex:'Купил за $400K, продал за $480K, расходы $20K → ROI = 15%'},
+  {id:'coc',name:'Cash-on-Cash Return',cat:'Investment Returns',full:'Доходность на вложенный кэш',def:'Годовой cashflow / Вложенный капитал.',ex:'Cashflow $15K / down payment $100K = 15%'},
+  {id:'yoy',name:'YoY Price Change',cat:'Market',full:'Годовое изменение цены',def:'Изменение цены за 12 месяцев.',ex:'Квартира стоила $380K год назад, сейчас $400K → +5.3%'},
+  {id:'ma',name:'Moving Average',cat:'Market',full:'Скользящее среднее',def:'Сглаживание ценовых колебаний за период.',ex:'MA(12) цены = $395K (среднее за 12 мес)'},
+  {id:'price_sqm',name:'Price per Sqm',cat:'Market',full:'Цена за единицу площади',def:'Стандарт сравнения недвижимости.',ex:'$400K / 80m² = $5000/m²'},
+  {id:'mortgage',name:'Mortgage Share',cat:'Market',full:'Доля ипотечных сделок',def:'Процент сделок с ипотекой на рынке.',ex:'60% сделок с ипотекой — рынок зависит от ставок'},
+  {id:'dscr',name:'DSCR',cat:'Market',full:'Debt Service Coverage Ratio',def:'NOI / Долговые платежи. Банки хотят > 1.25.',ex:'NOI $18K, ипотека $12K → DSCR = 1.5'},
+  {id:'breakeven',name:'Breakeven Occupancy',cat:'Market',full:'Минимальная заполняемость для безубыточности',def:'Минимальная заполняемость объекта, чтобы покрыть расходы.',ex:'Расходы $2K/мес, аренда $100/ночь → нужно 20 ночей/мес = 67%'}
+];
+
+// ─── STATE ───
+const LS_KEY = 'metrics_learn_v1';
+let state;
+
+function defaultState(){
+  return {
+    cards:{}, // id -> {interval, nextReview (timestamp), mastered}
+    quiz:{score:0,streak:0,bestStreak:0,total:0,correct:0},
+    lastActive:Date.now(),
+    dayStreak:0,
+    lastDay:null,
+    activeFilter:null
+  };
+}
+
+function loadState(){
+  let loaded=null;
+  // Try localStorage first
+  try{loaded=JSON.parse(localStorage.getItem(LS_KEY))}catch(e){}
+  // Fallback: try sessionStorage
+  if(!loaded){try{loaded=JSON.parse(sessionStorage.getItem(LS_KEY))}catch(e){}}
+  // Fallback: try URL hash
+  if(!loaded&&location.hash.length>1){
+    try{loaded=JSON.parse(decodeURIComponent(location.hash.slice(1)))}catch(e){}
+  }
+  state=loaded||defaultState();
+  // Ensure cards object exists (migration safety)
+  if(!state.cards)state.cards={};
+  if(!state.quiz)state.quiz={score:0,streak:0,bestStreak:0,total:0,correct:0};
+  // update day streak
+  const today=new Date().toDateString();
+  if(state.lastDay&&state.lastDay!==today){
+    const last=new Date(state.lastDay),now=new Date(today);
+    const diff=Math.round((now-last)/(1000*60*60*24));
+    if(diff===1)state.dayStreak=(state.dayStreak||0)+1;
+    else if(diff>1)state.dayStreak=0;
+  }
+  state.lastDay=today;
+  saveState();
+}
+
+function saveState(){
+  state.lastActive=Date.now();
+  const json=JSON.stringify(state);
+  try{localStorage.setItem(LS_KEY,json)}catch(e){}
+  try{sessionStorage.setItem(LS_KEY,json)}catch(e){}
+  // Save compact version to hash (only card states + quiz, skip heavy stuff)
+  try{
+    const compact={cards:state.cards,quiz:state.quiz,dayStreak:state.dayStreak,lastDay:state.lastDay};
+    history.replaceState(null,'','#'+encodeURIComponent(JSON.stringify(compact)));
+  }catch(e){}
+}
+
+function getCardState(id){
+  if(!state.cards[id])state.cards[id]={interval:1,nextReview:0,mastered:false};
+  return state.cards[id];
+}
+
+// ─── CARDS MODE ───
+let deck=[];
+let currentCard=null;
+let isDragging=false, startX=0, startY=0, currentX=0, cardEl=null;
+let isFlipped=false, isAnimating=false;
+
+function buildDeck(){
+  const now=Date.now();
+  const filter=state.activeFilter;
+  deck=METRICS.filter(m=>{
+    if(filter&&m.cat!==filter)return false;
+    const cs=getCardState(m.id);
+    return !cs.mastered||cs.nextReview<=now;
+  });
+  // sort: needs review first, then by nextReview
+  deck.sort((a,b)=>{
+    const ca=getCardState(a.id),cb=getCardState(b.id);
+    if(ca.mastered!==cb.mastered)return ca.mastered?1:-1;
+    return ca.nextReview-cb.nextReview;
+  });
+}
+
+function showNextCard(){
+  const container=document.getElementById('cardContainer');
+  const empty=document.getElementById('emptyState');
+  const btns=document.getElementById('cardButtons');
+
+  if(deck.length===0){
+    container.innerHTML='';
+    empty.classList.add('visible');
+    btns.style.display='none';
+    currentCard=null;
+    return;
+  }
+
+  empty.classList.remove('visible');
+  btns.style.display='flex';
+  currentCard=deck[0];
+  isFlipped=false;
+
+  const cat=CATEGORIES[currentCard.cat];
+  container.innerHTML=`
+    <div class="card" id="activeCard">
+      <div class="card-overlay like">&#10003;</div>
+      <div class="card-overlay nope">&#10007;</div>
+      <div class="card-inner">
+        <div class="card-face card-front">
+          <span class="card-category" style="background:${cat.color}22;color:${cat.color};border:1px solid ${cat.color}44">
+            ${cat.emoji} ${currentCard.cat}
+          </span>
+          <div class="metric-name">${currentCard.name}</div>
+          <div class="tap-hint">Нажми, чтобы перевернуть</div>
+        </div>
+        <div class="card-face card-back">
+          <div class="metric-name-sm">${currentCard.name}</div>
+          <div class="metric-full">${currentCard.full}</div>
+          <div class="definition">${currentCard.def}</div>
+          <div class="example">${currentCard.ex}</div>
+        </div>
+      </div>
+    </div>`;
+
+  cardEl=document.getElementById('activeCard');
+  attachCardEvents(cardEl);
+  updateProgress();
+}
+
+function attachCardEvents(el){
+  let tapStartTime=0,tapMoved=false;
+
+  function onStart(e){
+    if(isAnimating)return;
+    const t=e.touches?e.touches[0]:e;
+    startX=t.clientX;startY=t.clientY;currentX=0;
+    isDragging=true;tapStartTime=Date.now();tapMoved=false;
+    el.classList.add('dragging');
+    el.classList.remove('fly-reset');
+  }
+
+  function onMove(e){
+    if(!isDragging||isAnimating)return;
+    const t=e.touches?e.touches[0]:e;
+    currentX=t.clientX-startX;
+    const currentY=t.clientY-startY;
+    if(Math.abs(currentX)>5||Math.abs(currentY)>5)tapMoved=true;
+    const rot=currentX*0.08;
+    const clampedRot=Math.max(-15,Math.min(15,rot));
+    el.style.transform=`translateX(${currentX}px) rotate(${clampedRot}deg)`;
+
+    // overlays
+    const likeOv=el.querySelector('.card-overlay.like');
+    const nopeOv=el.querySelector('.card-overlay.nope');
+    const pct=Math.min(Math.abs(currentX)/120,1);
+    if(currentX>0){likeOv.style.opacity=pct;nopeOv.style.opacity=0}
+    else{nopeOv.style.opacity=pct;likeOv.style.opacity=0}
+
+    if(e.cancelable)e.preventDefault();
+  }
+
+  function onEnd(){
+    if(!isDragging||isAnimating)return;
+    isDragging=false;
+    el.classList.remove('dragging');
+    el.querySelector('.card-overlay.like').style.opacity=0;
+    el.querySelector('.card-overlay.nope').style.opacity=0;
+
+    const threshold=80;
+    if(Math.abs(currentX)>threshold){
+      flyCard(currentX>0?'right':'left');
+    } else if(!tapMoved&&Date.now()-tapStartTime<300){
+      flipCard();
+      el.style.transform='';
+    } else {
+      el.classList.add('fly-reset');
+      el.style.transform='';
+    }
+    currentX=0;
+  }
+
+  el.addEventListener('touchstart',onStart,{passive:true});
+  el.addEventListener('touchmove',onMove,{passive:false});
+  el.addEventListener('touchend',onEnd);
+  el.addEventListener('mousedown',onStart);
+  document.addEventListener('mousemove',onMove);
+  document.addEventListener('mouseup',onEnd);
+}
+
+function flipCard(){
+  if(!cardEl||isAnimating)return;
+  isFlipped=!isFlipped;
+  if(isFlipped)cardEl.classList.add('flipped');
+  else cardEl.classList.remove('flipped');
+  // haptic pulse
+  cardEl.classList.add('pulse');
+  setTimeout(()=>cardEl.classList.remove('pulse'),150);
+}
+
+function flyCard(dir){
+  if(!currentCard||isAnimating)return;
+  isAnimating=true;
+  cardEl.classList.add(dir==='right'?'fly-right':'fly-left');
+
+  const cs=getCardState(currentCard.id);
+  if(dir==='right'){
+    cs.interval=Math.min(cs.interval*2,64);
+    cs.nextReview=Date.now()+cs.interval*24*60*60*1000;
+    cs.mastered=cs.interval>=4;
+  }else{
+    cs.interval=1;
+    cs.nextReview=Date.now()+60*1000; // come back in 1 min
+    cs.mastered=false;
+  }
+  saveState();
+
+  setTimeout(()=>{
+    deck.shift();
+    isAnimating=false;
+    showNextCard();
+  },350);
+}
+
+function swipeAction(dir){
+  if(!currentCard||isAnimating)return;
+  flyCard(dir);
+}
+
+function resetDeck(){
+  const filter=state.activeFilter;
+  METRICS.forEach(m=>{
+    if(!filter||m.cat===filter){
+      state.cards[m.id]={interval:1,nextReview:0,mastered:false};
+    }
+  });
+  saveState();
+  buildDeck();
+  showNextCard();
+}
+
+// ─── FILTER CHIPS ───
+function renderFilterChips(){
+  const wrap=document.getElementById('filterChips');
+  let html='<div class="chip'+(state.activeFilter?'':' active')+'" onclick="setFilter(null)">Все</div>';
+  Object.keys(CATEGORIES).forEach(cat=>{
+    const c=CATEGORIES[cat];
+    const active=state.activeFilter===cat?' active':'';
+    html+=`<div class="chip${active}" onclick="setFilter('${cat}')" style="${active?'border-color:'+c.color+';color:'+c.color+';background:'+c.color+'15':''}">${c.emoji} ${cat}</div>`;
+  });
+  wrap.innerHTML=html;
+}
+
+function setFilter(cat){
+  state.activeFilter=cat;
+  saveState();
+  renderFilterChips();
+  buildDeck();
+  showNextCard();
+}
+
+// ─── PROGRESS ───
+function updateProgress(){
+  const filter=state.activeFilter;
+  const relevant=METRICS.filter(m=>!filter||m.cat===filter);
+  const mastered=relevant.filter(m=>getCardState(m.id).mastered).length;
+  const total=relevant.length;
+  const pct=total?Math.round(mastered/total*100):0;
+  document.getElementById('progressFill').style.width=pct+'%';
+  document.getElementById('progressLabel').textContent=`${mastered} / ${total} изучено`;
+}
+
+// ─── QUIZ MODE ───
+let quizAnswered=false;
+
+function generateQuizQuestion(){
+  quizAnswered=false;
+  document.getElementById('quizNext').classList.remove('visible');
+  const nameToDefMode=Math.random()>0.5;
+  const m=METRICS[Math.floor(Math.random()*METRICS.length)];
+  const qLabel=document.getElementById('qLabel');
+  const qText=document.getElementById('qText');
+
+  let correctAnswer,options;
+  if(nameToDefMode){
+    qLabel.textContent='Что это за метрика?';
+    qText.textContent=m.name;
+    correctAnswer=m.def;
+    const others=METRICS.filter(x=>x.id!==m.id).sort(()=>Math.random()-.5).slice(0,3).map(x=>x.def);
+    options=[correctAnswer,...others].sort(()=>Math.random()-.5);
+  }else{
+    qLabel.textContent='Определение';
+    qText.textContent=m.def;
+    correctAnswer=m.name;
+    const others=METRICS.filter(x=>x.id!==m.id).sort(()=>Math.random()-.5).slice(0,3).map(x=>x.name);
+    options=[correctAnswer,...others].sort(()=>Math.random()-.5);
+  }
+
+  const wrap=document.getElementById('quizOptions');
+  wrap.innerHTML=options.map((o,i)=>
+    `<div class="quiz-opt" data-correct="${o===correctAnswer?1:0}" data-metric="${m.id}" onclick="quizAnswer(this)">${o}</div>`
+  ).join('');
+
+  document.getElementById('quizStreak').innerHTML=`&#128293; Серия: ${state.quiz.streak}`;
+  document.getElementById('quizScore').textContent=`Счёт: ${state.quiz.score}`;
+}
+
+function quizAnswer(el){
+  if(quizAnswered)return;
+  quizAnswered=true;
+  const correct=el.dataset.correct==='1';
+  const metricId=el.dataset.metric;
+
+  if(correct){
+    el.classList.add('correct');
+    state.quiz.score+=10;
+    state.quiz.streak++;
+    state.quiz.correct++;
+    if(state.quiz.streak>state.quiz.bestStreak)state.quiz.bestStreak=state.quiz.streak;
+  }else{
+    el.classList.add('wrong');
+    el.classList.add('shake');
+    state.quiz.streak=0;
+    // flag for review
+    const cs=getCardState(metricId);
+    cs.interval=1;cs.nextReview=0;cs.mastered=false;
+    // highlight correct
+    document.querySelectorAll('.quiz-opt').forEach(o=>{
+      if(o.dataset.correct==='1')o.classList.add('correct');
+      else if(!o.classList.contains('wrong'))o.classList.add('dimmed');
+    });
+  }
+  state.quiz.total++;
+  saveState();
+
+  document.querySelectorAll('.quiz-opt').forEach(o=>{
+    if(!o.classList.contains('correct')&&!o.classList.contains('wrong'))o.classList.add('dimmed');
+  });
+
+  document.getElementById('quizStreak').innerHTML=`&#128293; Серия: ${state.quiz.streak}`;
+  document.getElementById('quizScore').textContent=`Счёт: ${state.quiz.score}`;
+  document.getElementById('quizNext').classList.add('visible');
+}
+
+function nextQuizQuestion(){generateQuizQuestion()}
+
+// ─── PROGRESS TAB ───
+function renderProgressTab(){
+  const area=document.getElementById('progressArea');
+  const totalMastered=METRICS.filter(m=>getCardState(m.id).mastered).length;
+  const totalReview=METRICS.length-totalMastered;
+  const accuracy=state.quiz.total?Math.round(state.quiz.correct/state.quiz.total*100):0;
+
+  let html=`
+    <div class="big-stats">
+      <div class="big-stat"><div class="num">${totalMastered}</div><div class="lbl">Изучено</div></div>
+      <div class="big-stat"><div class="num">${totalReview}</div><div class="lbl">На повторение</div></div>
+      <div class="big-stat"><div class="num">${state.dayStreak||0}</div><div class="lbl">Дней подряд</div></div>
+      <div class="big-stat"><div class="num">${accuracy}%</div><div class="lbl">Точность квиза</div></div>
+    </div>
+    <div class="stat-card"><h3>По категориям</h3>`;
+
+  Object.keys(CATEGORIES).forEach(cat=>{
+    const c=CATEGORIES[cat];
+    const items=METRICS.filter(m=>m.cat===cat);
+    const mastered=items.filter(m=>getCardState(m.id).mastered).length;
+    const pct=items.length?Math.round(mastered/items.length*100):0;
+    html+=`<div class="stat-row">
+      <span class="label"><span class="cat-dot" style="background:${c.color}"></span>${c.emoji} ${cat}</span>
+      <span class="bar-wrap"><span class="bar-fill" style="width:${pct}%;background:${c.color}"></span></span>
+      <span class="val">${mastered}/${items.length}</span>
+    </div>`;
+  });
+
+  html+=`</div>
+    <div class="stat-card"><h3>Квиз</h3>
+      <div class="stat-row"><span class="label">Всего вопросов</span><span class="val">${state.quiz.total}</span></div>
+      <div class="stat-row"><span class="label">Правильных</span><span class="val">${state.quiz.correct}</span></div>
+      <div class="stat-row"><span class="label">Лучшая серия</span><span class="val">${state.quiz.bestStreak}</span></div>
+    </div>
+    <button class="reset-btn" onclick="if(confirm('Сбросить весь прогресс?')){state=defaultState();saveState();init()}">Сбросить прогресс</button>`;
+
+  area.innerHTML=html;
+}
+
+// ─── TABS ───
+function switchTab(el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById(el.dataset.tab).classList.add('active');
+
+  if(el.dataset.tab==='panelQuiz')generateQuizQuestion();
+  if(el.dataset.tab==='panelProgress')renderProgressTab();
+  if(el.dataset.tab==='panelCards'){buildDeck();showNextCard()}
+}
+
+// ─── INIT ───
+function init(){
+  loadState();
+  renderFilterChips();
+  buildDeck();
+  showNextCard();
+}
+
+init();
+</script>
+</body>
+</html>
