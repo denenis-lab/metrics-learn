@@ -11,8 +11,8 @@
 --bg:#1a1a2e;--card:#16213e;--card-light:#1a2744;
 --green:#0f9b58;--red:#e74c3c;--text:#e0e0e0;--heading:#fff;
 --cat-revenue:#4ecdc4;--cat-profit:#f7dc6f;--cat-users:#bb8fce;
---cat-startup:#e59866;--cat-data:#85c1e9;--cat-rental:#82e0aa;
---cat-invest:#f1948a;--cat-market:#aeb6bf;
+--cat-unit:#e59866;--cat-data:#85c1e9;--cat-crypto:#82e0aa;
+--cat-finance:#f1948a;--cat-infra:#aeb6bf;
 }
 html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text)}
 .app{max-width:440px;margin:0 auto;height:100%;display:flex;flex-direction:column;position:relative;overflow:hidden}
@@ -48,13 +48,13 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 
 /* Card front */
 .card-category{display:inline-block;padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;margin-bottom:auto;align-self:flex-start}
-.card-front .metric-name{font-size:32px;font-weight:800;color:var(--heading);line-height:1.2;margin:auto 0;text-align:center}
+.card-front .metric-name{font-size:28px;font-weight:800;color:var(--heading);line-height:1.2;margin:auto 0;text-align:center}
 .card-front .tap-hint{font-size:12px;color:#666;text-align:center;margin-top:auto}
 
 /* Card back */
 .card-back .metric-name-sm{font-size:18px;font-weight:700;color:var(--heading);margin-bottom:4px}
-.card-back .metric-full{font-size:13px;color:#aaa;margin-bottom:16px}
-.card-back .definition{font-size:15px;line-height:1.6;margin-bottom:20px;color:var(--text)}
+.card-back .metric-full{font-size:13px;color:#aaa;margin-bottom:12px}
+.card-back .definition{font-size:14px;line-height:1.6;margin-bottom:16px;color:var(--text)}
 .card-back .example{font-size:13px;line-height:1.5;color:#aaa;background:rgba(0,0,0,.2);padding:14px;border-radius:12px;border-left:3px solid var(--green)}
 
 /* Overlay indicators */
@@ -84,7 +84,7 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 .quiz-score{color:#aaa}
 .quiz-question{background:var(--card);border-radius:16px;padding:24px;margin-bottom:20px;min-height:120px;display:flex;flex-direction:column;justify-content:center}
 .quiz-question .q-label{font-size:12px;color:#888;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px}
-.quiz-question .q-text{font-size:18px;font-weight:600;color:var(--heading);line-height:1.5}
+.quiz-question .q-text{font-size:17px;font-weight:600;color:var(--heading);line-height:1.5}
 .quiz-options{display:flex;flex-direction:column;gap:10px}
 .quiz-opt{padding:16px 20px;border-radius:14px;background:var(--card);border:2px solid transparent;font-size:15px;color:var(--text);cursor:pointer;transition:all .2s;text-align:left;line-height:1.4}
 .quiz-opt:active{transform:scale(.97)}
@@ -137,10 +137,10 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 <div class="app">
   <div class="progress-bar-wrap">
     <div class="progress-bar"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>
-    <div class="progress-label" id="progressLabel">0 / 35 изучено</div>
+    <div class="progress-label" id="progressLabel">0 / 0 изучено</div>
   </div>
 
-  <div class="header"><h1>Metrics Learn</h1></div>
+  <div class="header"><h1>Wallet Finance Prep</h1></div>
 
   <div class="filter-chips" id="filterChips"></div>
 
@@ -203,61 +203,248 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 <script>
 // ─── DATA ───
 const CATEGORIES = {
-  'Revenue & Growth':   {color:'#4ecdc4',emoji:'💰'},
-  'Profitability':      {color:'#f7dc6f',emoji:'📊'},
-  'Users & Retention':  {color:'#bb8fce',emoji:'👥'},
-  'Startup':            {color:'#e59866',emoji:'🔥'},
-  'Data Quality':       {color:'#85c1e9',emoji:'📈'},
-  'Rental Yield':       {color:'#82e0aa',emoji:'🏠'},
-  'Investment Returns': {color:'#f1948a',emoji:'💎'},
-  'Market':             {color:'#aeb6bf',emoji:'🏗️'}
+  'P&L Structure':        {color:'#f7dc6f',emoji:'📊'},
+  'Unit Economics':       {color:'#e59866',emoji:'🔥'},
+  'Users & Retention':    {color:'#bb8fce',emoji:'👥'},
+  'Crypto & Wallet':      {color:'#82e0aa',emoji:'🪙'},
+  'Financial Analysis':   {color:'#f1948a',emoji:'🔍'},
+  'Revenue & Monetization':{color:'#4ecdc4',emoji:'💰'},
+  'Data Infrastructure':  {color:'#aeb6bf',emoji:'🏗️'},
+  'Data Quality':         {color:'#85c1e9',emoji:'📈'}
 };
 
 const METRICS = [
-  {id:'revenue',name:'Revenue',cat:'Revenue & Growth',full:'Выручка',def:'Общий объём денежных средств от реализации продукта.',ex:'Продали подписок на $10M за месяц → Revenue = $10M. Это не прибыль — расходы ещё не вычтены.'},
-  {id:'arpu',name:'ARPU',cat:'Revenue & Growth',full:'Average Revenue Per User',def:'Средний доход на пользователя.',ex:'100K пользователей, Revenue $1M → ARPU = $10'},
-  {id:'mrr',name:'MRR',cat:'Revenue & Growth',full:'Monthly Recurring Revenue',def:'Ежемесячная повторяющаяся выручка.',ex:'10K подписчиков × $10 = MRR $100K'},
-  {id:'nrr',name:'NRR',cat:'Revenue & Growth',full:'Net Revenue Retention',def:'Чистое удержание выручки. Учитывает апгрейды и даунгрейды.',ex:'NRR 110% — существующие клиенты платят на 10% больше YoY'},
-  {id:'gross_margin',name:'Gross Margin',cat:'Profitability',full:'Валовая маржа',def:'(Revenue - COGS) / Revenue.',ex:'Revenue $10M, COGS $3M → GM = 70%'},
-  {id:'net_margin',name:'Net Margin',cat:'Profitability',full:'Чистая маржа',def:'Net Profit / Revenue.',ex:'Revenue $10M, Net Profit $1.5M → NM = 15%'},
-  {id:'ebitda',name:'EBITDA',cat:'Profitability',full:'Прибыль до вычета процентов, налогов, амортизации',def:'Показывает операционную эффективность.',ex:'Revenue $10M, OpEx $7M, D&A $1M → EBITDA = $4M'},
-  {id:'contribution_margin',name:'Contribution Margin',cat:'Profitability',full:'Маржинальная прибыль на единицу',def:'Revenue per unit - Variable costs per unit.',ex:'Подписка $10/мес, переменные $3 → CM = $7'},
-  {id:'ltv',name:'LTV',cat:'Users & Retention',full:'Lifetime Value',def:'Сколько приносит клиент за всё время.',ex:'ARPU $10/мес × 24 мес retention = LTV $240'},
-  {id:'cac',name:'CAC',cat:'Users & Retention',full:'Customer Acquisition Cost',def:'Стоимость привлечения клиента.',ex:'$100K на маркетинг / 1000 новых = CAC $100'},
-  {id:'ltv_cac',name:'LTV/CAC Ratio',cat:'Users & Retention',full:'Соотношение ценности к стоимости привлечения',def:'Здоровый бизнес: LTV/CAC > 3.',ex:'LTV $240 / CAC $100 = 2.4 — нужно снижать CAC'},
-  {id:'churn',name:'Churn Rate',cat:'Users & Retention',full:'Доля ушедших клиентов за период',def:'Доля клиентов, прекративших пользоваться продуктом.',ex:'1000 клиентов, 50 ушли → Churn = 5%/мес'},
-  {id:'retention',name:'Retention Rate',cat:'Users & Retention',full:'Доля оставшихся клиентов',def:'1 - Churn. Показывает, сколько клиентов остаётся.',ex:'Churn 5% → Retention 95%'},
-  {id:'cohort',name:'Cohort Retention',cat:'Users & Retention',full:'Удержание по когортам',def:'Как ведут себя группы клиентов, пришедшие в одно время.',ex:'Когорта Января — через 3 мес осталось 60%, через 6 мес — 40%'},
-  {id:'burn',name:'Burn Rate',cat:'Startup',full:'Скорость сжигания денег',def:'Сколько компания тратит в месяц сверх дохода.',ex:'Revenue $200K, расходы $350K → Burn Rate = $150K/мес'},
-  {id:'runway',name:'Runway',cat:'Startup',full:'Запас прочности',def:'Сколько месяцев компания проживёт на текущих запасах. Cash / Burn Rate.',ex:'$3M на счету / $150K burn = 20 мес'},
-  {id:'payback',name:'Payback Period',cat:'Startup',full:'Срок окупаемости привлечения клиента',def:'CAC / (ARPU × Margin).',ex:'CAC $100, ARPU $10, Margin 70% → PP = 14.3 мес'},
-  {id:'completeness',name:'Data Completeness',cat:'Data Quality',full:'Полнота данных',def:'Процент заполненных полей.',ex:'95% строк имеют email → completeness 95%'},
-  {id:'freshness',name:'Data Freshness',cat:'Data Quality',full:'Свежесть данных',def:'Время от события до появления в хранилище.',ex:'Freshness = 2 часа (данные обновляются каждые 2ч)'},
-  {id:'drift',name:'Data Drift',cat:'Data Quality',full:'Дрейф данных',def:'Изменение распределения данных со временем.',ex:'Средний чек вырос с $50 до $80 за квартал — drift detected'},
-  {id:'gross_yield',name:'Gross Rental Yield',cat:'Rental Yield',full:'Валовая доходность аренды',def:'(Годовая аренда / Цена покупки) × 100%.',ex:'Аренда $24K/год, покупка $400K → yield = 6%'},
-  {id:'net_yield',name:'Net Rental Yield',cat:'Rental Yield',full:'Чистая доходность аренды',def:'(Аренда - расходы) / Цена × 100%.',ex:'($24K - $6K) / $400K = 4.5%'},
-  {id:'cap_rate',name:'Cap Rate',cat:'Rental Yield',full:'Ставка капитализации',def:'NOI / Market Value.',ex:'NOI $18K / $400K = 4.5%'},
-  {id:'vacancy',name:'Vacancy Rate',cat:'Rental Yield',full:'Доля пустующих объектов',def:'Процент незанятых объектов недвижимости.',ex:'10 из 200 квартир пустуют → vacancy = 5%'},
-  {id:'grm',name:'GRM',cat:'Rental Yield',full:'Gross Rent Multiplier',def:'Цена / Годовая аренда. Сколько лет аренда окупит покупку.',ex:'$400K / $24K = 16.7 лет'},
-  {id:'npv',name:'NPV',cat:'Investment Returns',full:'Net Present Value',def:'Чистая приведённая стоимость. Сумма дисконтированных денежных потоков.',ex:'Инвестиция $400K, потоки по $25K/год 20 лет, ставка 5% → NPV = -$88K'},
-  {id:'irr',name:'IRR',cat:'Investment Returns',full:'Internal Rate of Return',def:'Ставка, при которой NPV = 0.',ex:'IRR = 8% — проект даёт 8% годовых'},
-  {id:'roi',name:'ROI',cat:'Investment Returns',full:'Return on Investment',def:'(Gain - Cost) / Cost × 100%.',ex:'Купил за $400K, продал за $480K, расходы $20K → ROI = 15%'},
-  {id:'coc',name:'Cash-on-Cash Return',cat:'Investment Returns',full:'Доходность на вложенный кэш',def:'Годовой cashflow / Вложенный капитал.',ex:'Cashflow $15K / down payment $100K = 15%'},
-  {id:'yoy',name:'YoY Price Change',cat:'Market',full:'Годовое изменение цены',def:'Изменение цены за 12 месяцев.',ex:'Квартира стоила $380K год назад, сейчас $400K → +5.3%'},
-  {id:'ma',name:'Moving Average',cat:'Market',full:'Скользящее среднее',def:'Сглаживание ценовых колебаний за период.',ex:'MA(12) цены = $395K (среднее за 12 мес)'},
-  {id:'price_sqm',name:'Price per Sqm',cat:'Market',full:'Цена за единицу площади',def:'Стандарт сравнения недвижимости.',ex:'$400K / 80m² = $5000/m²'},
-  {id:'mortgage',name:'Mortgage Share',cat:'Market',full:'Доля ипотечных сделок',def:'Процент сделок с ипотекой на рынке.',ex:'60% сделок с ипотекой — рынок зависит от ставок'},
-  {id:'dscr',name:'DSCR',cat:'Market',full:'Debt Service Coverage Ratio',def:'NOI / Долговые платежи. Банки хотят > 1.25.',ex:'NOI $18K, ипотека $12K → DSCR = 1.5'},
-  {id:'breakeven',name:'Breakeven Occupancy',cat:'Market',full:'Минимальная заполняемость для безубыточности',def:'Минимальная заполняемость объекта, чтобы покрыть расходы.',ex:'Расходы $2K/мес, аренда $100/ночь → нужно 20 ночей/мес = 67%'}
+  // ── P&L Structure (10) ──
+  {id:'revenue',name:'Revenue',cat:'P&L Structure',full:'Выручка',
+    def:'Общий объём денежных средств от реализации продукта. Верхняя строка P&L — всё начинается с неё.',
+    ex:'Wallet: комиссии за buy/sell + spread на swap + fee от P2P + staking rewards = общий Revenue.'},
+  {id:'cogs',name:'COGS',cat:'P&L Structure',full:'Cost of Goods Sold — Себестоимость',
+    def:'Прямые затраты на предоставление услуги. Вычитается из Revenue для получения Gross Profit.',
+    ex:'Wallet: gas fees блокчейна ($0.50 за транзакцию) + комиссия платёжного провайдера ($0.30) = COGS $0.80 на сделку.'},
+  {id:'gross_profit',name:'Gross Profit',cat:'P&L Structure',full:'Валовая прибыль',
+    def:'Revenue − COGS. Показывает, сколько остаётся после прямых затрат.',
+    ex:'Revenue $10M − COGS $3M = Gross Profit $7M.'},
+  {id:'gross_margin',name:'Gross Margin',cat:'P&L Structure',full:'Валовая маржа',
+    def:'Gross Profit / Revenue × 100%. Показывает эффективность основного бизнеса.',
+    ex:'Swap: Revenue $3M, COGS $0.8M → GM = 73%. P2P: Revenue $1M, COGS $0.1M → GM = 90%. P2P маржинальнее!'},
+  {id:'opex',name:'OpEx',cat:'P&L Structure',full:'Operating Expenses — Операционные расходы',
+    def:'Зарплаты, офисы, маркетинг, серверы — всё, что не COGS. Вычитается из Gross Profit.',
+    ex:'Зарплаты $3M + маркетинг $1M + инфраструктура $0.5M + офисы $0.5M = OpEx $5M.'},
+  {id:'ebitda',name:'EBITDA',cat:'P&L Structure',full:'Прибыль до вычета процентов, налогов, амортизации',
+    def:'Gross Profit − OpEx (упрощённо). Показывает операционную эффективность бизнеса.',
+    ex:'Gross Profit $7M − OpEx $5M = EBITDA $2M. Инвесторы смотрят на EBITDA margin = 20%.'},
+  {id:'net_income',name:'Net Income',cat:'P&L Structure',full:'Чистая прибыль',
+    def:'Что остаётся после ВСЕХ расходов: COGS + OpEx + налоги + амортизация. Нижняя строка P&L.',
+    ex:'Revenue $10M → Gross Profit $7M → EBITDA $2M → Net Income $1.5M (после налогов и амортизации).'},
+  {id:'net_margin',name:'Net Margin',cat:'P&L Structure',full:'Чистая маржа',
+    def:'Net Income / Revenue × 100%. Сколько процентов выручки превращается в прибыль.',
+    ex:'Net Income $1.5M / Revenue $10M = 15%. Для финтеха 10-20% — хорошо.'},
+  {id:'contribution_margin',name:'Contribution Margin',cat:'P&L Structure',full:'Маржинальная прибыль на единицу',
+    def:'Revenue per unit − Variable costs per unit. Показывает, сколько каждая продажа вносит в покрытие фиксированных расходов.',
+    ex:'Комиссия за swap $2 − gas fee $0.50 − провайдер $0.30 = CM = $1.20 с транзакции.'},
+  {id:'pnl_breakdown',name:'P&L by Product',cat:'P&L Structure',full:'P&L в разрезе продуктов',
+    def:'Отдельный P&L для каждого продукта. Показывает, какой продукт реально зарабатывает.',
+    ex:'Buy/Sell: GM 60%, Swap: GM 73%, P2P: GM 90%, Staking: GM 90%. P2P и Staking — самые маржинальные.'},
+
+  // ── Unit Economics (9) ──
+  {id:'cac',name:'CAC',cat:'Unit Economics',full:'Customer Acquisition Cost',
+    def:'Сколько стоит привлечь одного юзера. Все маркетинговые расходы / новых юзеров.',
+    ex:'Потратили $500K на маркетинг, пришло 50K юзеров → CAC = $10.'},
+  {id:'ltv',name:'LTV',cat:'Unit Economics',full:'Lifetime Value — Пожизненная ценность клиента',
+    def:'Сколько денег юзер принесёт за всё время использования продукта.',
+    ex:'Средняя комиссия $2 × 3 транзакции/мес × 8 мес активности = LTV $48.'},
+  {id:'ltv_cac',name:'LTV/CAC Ratio',cat:'Unit Economics',full:'Соотношение ценности к стоимости привлечения',
+    def:'Главная метрика юнит-экономики. < 1 — убыток, 1-3 — на грани, > 3 — масштабируемый бизнес.',
+    ex:'LTV $48 / CAC $10 = 4.8x — отлично, можно больше тратить на маркетинг.'},
+  {id:'payback',name:'Payback Period',cat:'Unit Economics',full:'Срок окупаемости привлечения',
+    def:'Через сколько месяцев юзер окупает свой CAC.',
+    ex:'CAC $10, доход с юзера $6/мес → Payback = 1.7 месяца.'},
+  {id:'roi',name:'ROI',cat:'Unit Economics',full:'Return on Investment',
+    def:'(Прибыль − Затраты) / Затраты × 100%. Универсальная метрика эффективности вложений.',
+    ex:'Потратили $500K на маркетинг → заработали $2.4M. ROI = ($2.4M − $0.5M) / $0.5M = 380%.'},
+  {id:'arpu',name:'ARPU',cat:'Unit Economics',full:'Average Revenue Per User',
+    def:'Средний доход на одного пользователя за период.',
+    ex:'Revenue $1M / 100K активных юзеров = ARPU $10/мес.'},
+  {id:'arppu',name:'ARPPU',cat:'Unit Economics',full:'Average Revenue Per Paying User',
+    def:'Средний доход на платящего пользователя. Только те, кто реально совершает транзакции.',
+    ex:'Revenue $1M / 20K платящих юзеров = ARPPU $50/мес. ARPPU всегда > ARPU.'},
+  {id:'burn',name:'Burn Rate',cat:'Unit Economics',full:'Скорость сжигания денег',
+    def:'Сколько компания тратит в месяц сверх дохода. Cash / Burn Rate = Runway.',
+    ex:'Revenue $200K, расходы $350K → Burn Rate = $150K/мес. $3M на счету → Runway = 20 мес.'},
+  {id:'unit_economics_wallet',name:'Unit Economics Wallet',cat:'Unit Economics',full:'Юнит-экономика одной транзакции',
+    def:'Разбор одной транзакции: сколько заработали, сколько потратили, сколько осталось.',
+    ex:'Buy 100 USDT: комиссия $2.00 − gas $0.50 − провайдер $0.30 = Gross Profit $1.20. GM = 60%.'},
+
+  // ── Users & Retention (7) ──
+  {id:'churn',name:'Churn Rate',cat:'Users & Retention',full:'Доля ушедших клиентов за период',
+    def:'Процент клиентов, прекративших пользоваться продуктом за период.',
+    ex:'1000 клиентов на начало месяца, 50 ушли → Churn = 5%/мес.'},
+  {id:'retention',name:'Retention Rate',cat:'Users & Retention',full:'Доля оставшихся клиентов',
+    def:'1 − Churn. Показывает, сколько клиентов остаётся с нами.',
+    ex:'Churn 5% → Retention 95%. Для крипто-кошелька monthly retention 70%+ — хорошо.'},
+  {id:'cohort',name:'Cohort Retention',cat:'Users & Retention',full:'Удержание по когортам',
+    def:'Анализ поведения групп юзеров, пришедших в одно время. Золотой стандарт анализа retention.',
+    ex:'Когорта января: D7 retention 60%, D30 = 40%, D90 = 25%. Когорта февраля лучше: D30 = 50% — новый онбординг работает!'},
+  {id:'dau_mau',name:'DAU/MAU',cat:'Users & Retention',full:'Daily/Monthly Active Users Ratio',
+    def:'Stickiness — как часто юзеры возвращаются. DAU/MAU = 50% значит средний юзер активен 15 дней из 30.',
+    ex:'DAU 500K / MAU 2M = 25%. Для кошелька 20-30% — норма (люди не делают транзакции каждый день).'},
+  {id:'mrr',name:'MRR',cat:'Users & Retention',full:'Monthly Recurring Revenue',
+    def:'Ежемесячная повторяющаяся выручка. Предсказуемый доход от подписок/регулярных комиссий.',
+    ex:'10K активных трейдеров × $15 avg комиссий/мес = MRR $150K.'},
+  {id:'nrr',name:'NRR',cat:'Users & Retention',full:'Net Revenue Retention',
+    def:'Чистое удержание выручки. Учитывает апгрейды, даунгрейды и отток. > 100% — рост без новых клиентов.',
+    ex:'NRR 110% — существующие юзеры платят на 10% больше YoY. Меньше 100% — теряем деньги даже с новыми.'},
+  {id:'activation',name:'Activation Rate',cat:'Users & Retention',full:'Доля юзеров, совершивших ключевое действие',
+    def:'Процент зарегистрированных юзеров, которые сделали первое ключевое действие (first value moment).',
+    ex:'Wallet: из 100K регистраций 30K сделали first transaction → Activation = 30%. Низкий? Улучшаем онбординг.'},
+
+  // ── Crypto & Wallet (12) ──
+  {id:'multi_chain',name:'Multi-chain Wallet',cat:'Crypto & Wallet',full:'Кошелёк с поддержкой нескольких блокчейнов',
+    def:'Один кошелёк для разных сетей: TON, Ethereum, Bitcoin, TRON. Как один бумажник с рублями, долларами и евро.',
+    ex:'Wallet в Telegram показывает USDT сразу на TON, Ethereum, TRON — юзер видит единый баланс.'},
+  {id:'self_custodial',name:'Self-custodial',cat:'Crypto & Wallet',full:'Кошелёк с самостоятельным хранением ключей',
+    def:'Ты сам хранишь seed-фразу (приватный ключ). Никто — ни Wallet, ни Telegram — не может заблокировать/забрать деньги.',
+    ex:'Custodial = деньги в банке (Binance). Self-custodial = сейф дома (MetaMask, TON Wallet). Больше контроля, больше ответственности.'},
+  {id:'dapps',name:'dApps',cat:'Crypto & Wallet',full:'Decentralized Applications',
+    def:'Приложения на блокчейне без центрального сервера: DEX (обмен), Lending (кредиты), NFT маркетплейсы.',
+    ex:'Юзер в Wallet нажимает кнопку → подключается к StonFi (DEX на TON) → свопает токены → подписывает транзакцию.'},
+  {id:'gas_fee',name:'Gas Fee',cat:'Crypto & Wallet',full:'Комиссия сети за выполнение транзакции',
+    def:'Плата блокчейну за обработку транзакции. Зависит от загруженности сети. Это часть COGS для Wallet.',
+    ex:'Ethereum gas: $5-50 (дорого!). TON gas: $0.01-0.05 (дёшево). Выбор сети влияет на маржу Wallet.'},
+  {id:'spread',name:'Spread',cat:'Crypto & Wallet',full:'Разница между ценой покупки и продажи',
+    def:'Разница между курсом покупки и продажи. Один из основных источников дохода для кошельков и бирж.',
+    ex:'BTC buy price: $60,100, sell price: $60,000. Spread = $100 (0.17%). Wallet зарабатывает на этой разнице.'},
+  {id:'on_ramp',name:'On-ramp / Off-ramp',cat:'Crypto & Wallet',full:'Вход/выход из крипто через фиат',
+    def:'On-ramp: фиат → крипта (карта → USDT). Off-ramp: крипта → фиат (USDT → рубли на карту). Обычно самая высокая комиссия.',
+    ex:'Юзер покупает USDT за $1000 картой Visa. Комиссия 2.5% = $25. Из них: Wallet $15, провайдер $10.'},
+  {id:'settlement',name:'Settlement',cat:'Crypto & Wallet',full:'Финальное завершение расчёта',
+    def:'Момент, когда транзакция окончательно завершена и необратима. Важно для revenue recognition.',
+    ex:'On-chain: settlement за 1 сек (TON) или 15 мин (Bitcoin). Через карту: settlement 1-3 рабочих дня от Visa.'},
+  {id:'revenue_recognition',name:'Revenue Recognition',cat:'Crypto & Wallet',full:'Признание выручки — когда считать доход',
+    def:'Правило: КОГДА считать, что деньги заработаны? Критично для финансовой отчётности.',
+    ex:'Юзер нажал «Buy» → pending (не revenue) → confirmed on-chain (revenue для крипто-комиссии) → settled from Visa (revenue для on-ramp).'},
+  {id:'kyc_aml',name:'KYC / AML',cat:'Crypto & Wallet',full:'Know Your Customer / Anti-Money Laundering',
+    def:'KYC — проверка личности юзера (паспорт, фото). AML — проверка на отмывание денег. Обязательно для финтеха.',
+    ex:'Wallet: без KYC — лимит $300/мес. После KYC L1 (фото + ID) — до $10K. KYC L2 (видео) — без лимитов.'},
+  {id:'staking',name:'Staking',cat:'Crypto & Wallet',full:'Замораживание крипты для получения вознаграждения',
+    def:'Юзер «ставит» свои токены в сеть и получает % годовых. Wallet берёт комиссию от rewards.',
+    ex:'Юзер стейкает 10,000 TON. APY = 5%. Через год: +500 TON rewards. Wallet берёт 10% = 50 TON комиссия.'},
+  {id:'tvl',name:'TVL',cat:'Crypto & Wallet',full:'Total Value Locked',
+    def:'Общая стоимость активов, заблокированных в протоколе/кошельке. Метрика доверия и масштаба.',
+    ex:'TVL Wallet = $2B означает, что юзеры хранят криптоактивы на $2B. Рост TVL → рост потенциального revenue.'},
+  {id:'p2p',name:'P2P Trading',cat:'Crypto & Wallet',full:'Peer-to-Peer — торговля между юзерами напрямую',
+    def:'Юзеры покупают/продают крипту друг у друга. Wallet — посредник, берёт комиссию с продавца.',
+    ex:'Юзер А продаёт 1000 USDT юзеру Б за рубли. Комиссия 0.5% с продавца = $5. Маржа P2P ~90% (нет gas/провайдеров).'},
+
+  // ── Financial Analysis (10) ──
+  {id:'anomaly_detection',name:'Anomaly Detection',cat:'Financial Analysis',full:'Обнаружение аномалий в данных',
+    def:'Автоматическое нахождение аномалий: резкий рост/падение метрик. Методы: % отклонение, Z-score, moving average.',
+    ex:'Revenue сегодня $80K, avg за 7 дней $100K → отклонение −20% → алерт! Декомпозиция: по продукту, по гео, по сегменту.'},
+  {id:'decomposition',name:'Metric Decomposition',cat:'Financial Analysis',full:'Декомпозиция метрики на составляющие',
+    def:'Revenue = Volume × Average Check. При падении — разложи: упал объём или средний чек? По каким продуктам? По каким гео?',
+    ex:'Revenue −20%: Swap −30% (gas fees spike), Buy/Sell −5% (сезонность), P2P +10% (рост). Причина — Ethereum congestion.'},
+  {id:'scenario_analysis',name:'Scenario Analysis',cat:'Financial Analysis',full:'Анализ сценариев — pessimistic / base / optimistic',
+    def:'Три прогноза с разными вводными. Показывает диапазон возможных результатов для CFO.',
+    ex:'Q2: Pessimistic $270K (30K юзеров), Base $900K (50K юзеров), Optimistic $3M (80K юзеров). Base — для бюджета, Pessimistic — для плана Б.'},
+  {id:'sensitivity',name:'Sensitivity Analysis',cat:'Financial Analysis',full:'Анализ чувствительности — что влияет больше всего',
+    def:'Меняешь по одному параметру на ±10% и смотришь, какой сильнее влияет на прибыль.',
+    ex:'Retention +10% → Revenue +15%. CAC −10% → Profit +8%. Вывод: инвестировать в retention выгоднее.'},
+  {id:'forecasting',name:'Forecasting',cat:'Financial Analysis',full:'Прогнозирование',
+    def:'Предсказание метрик на будущее. Методы: тренд, сезонность, pipeline (воронка), экспертная оценка.',
+    ex:'Revenue forecast Q3: исторический тренд +10% QoQ, сезонность лета −5%, новый продукт +15% → прогноз +20%.'},
+  {id:'margin_analysis',name:'Margin Analysis',cat:'Financial Analysis',full:'Анализ маржи — почему изменилась',
+    def:'Если маржа упала — найди причину. Выросли ли затраты? Упал ли средний чек? Поменялся ли product mix?',
+    ex:'GM упала с 73% до 65%: gas fees выросли на 40% (Ethereum congestion), а средний чек тот же → проблема в COGS.'},
+  {id:'hypothesis_testing',name:'Financial Hypothesis',cat:'Financial Analysis',full:'Формулировка и проверка финансовых гипотез',
+    def:'Наблюдение → Гипотеза → Проверка данными → Вывод → Рекомендация.',
+    ex:'Swap revenue ↓20%. Гипотеза: юзеры ушли на DEX из-за gas. Проверка: on-chain volumes упали у всех → рынок, не мы.'},
+  {id:'reconciliation',name:'Reconciliation',cat:'Financial Analysis',full:'Сверка данных между системами',
+    def:'Проверка, что цифры в разных источниках совпадают. Если нет — найти расхождение.',
+    ex:'Дашборд показывает Revenue $1.05M, бухгалтерия — $1.02M. Разница $30K — находим: pending транзакции не учтены в бухгалтерии.'},
+  {id:'cohort_revenue',name:'Revenue Cohort Analysis',cat:'Financial Analysis',full:'Анализ выручки по когортам',
+    def:'Смотрим, как ведут себя юзеры разных когорт по доходу: растут, падают, стабилизируются?',
+    ex:'Когорта янв: ARPU M1=$5, M3=$8, M6=$12 (растёт!). Когорта мар: M1=$5, M3=$4 (падает) — что изменилось в продукте?'},
+  {id:'waterfall',name:'Waterfall Chart',cat:'Financial Analysis',full:'Каскадная диаграмма изменений',
+    def:'Визуализация: от прошлого значения к текущему через плюсы и минусы. Идеально для P&L и MRR.',
+    ex:'MRR: $100K → +$20K новые → +$5K апгрейды → −$8K churn → −$2K даунгрейды = $115K.'},
+
+  // ── Revenue & Monetization (7) ──
+  {id:'wallet_revenue_buy',name:'Buy/Sell Revenue',cat:'Revenue & Monetization',full:'Доход от покупки/продажи крипты',
+    def:'Комиссия 1-3% от суммы при покупке или продаже крипты через кошелёк.',
+    ex:'Юзер покупает BTC за $1000. Комиссия 2% = $20. Это самый большой по объёму канал Revenue.'},
+  {id:'wallet_revenue_swap',name:'Swap Revenue',cat:'Revenue & Monetization',full:'Доход от обмена токенов',
+    def:'Spread (разница курсов) при обмене одного токена на другой.',
+    ex:'Юзер свопает 1000 USDT → TON. Курс с spread 0.5% → Wallet зарабатывает $5.'},
+  {id:'wallet_revenue_p2p',name:'P2P Revenue',cat:'Revenue & Monetization',full:'Доход от P2P-торговли',
+    def:'Комиссия с продавца при P2P-сделках между юзерами.',
+    ex:'Сделка на $2000 USDT, комиссия 0.5% с продавца = $10. Самый маржинальный канал (~90% GM).'},
+  {id:'wallet_revenue_staking',name:'Staking Revenue',cat:'Revenue & Monetization',full:'Доход от стейкинга',
+    def:'Процент от вознаграждений юзера за стейкинг.',
+    ex:'Юзер получил 500 TON rewards. Wallet берёт 10% = 50 TON. Пассивный доход для Wallet.'},
+  {id:'wallet_revenue_onramp',name:'On-ramp Revenue',cat:'Revenue & Monetization',full:'Доход от фиат → крипто конвертации',
+    def:'Комиссия при покупке крипты за фиат (карта, банковский перевод).',
+    ex:'Юзер покупает USDT за $1000 с Visa. Общая комиссия 2.5%, из них Wallet получает ~1.5% = $15.'},
+  {id:'wallet_pay',name:'Wallet Pay',cat:'Revenue & Monetization',full:'Оплата товаров/услуг через Wallet',
+    def:'Мерчанты принимают оплату через Wallet. Комиссия с мерчанта.',
+    ex:'Юзер оплачивает $50 за подписку через Wallet Pay. Мерчант платит 1% = $0.50 комиссии.'},
+  {id:'take_rate',name:'Take Rate',cat:'Revenue & Monetization',full:'Процент от объёма транзакций, который забирает платформа',
+    def:'Revenue / GMV × 100%. Ключевая метрика для marketplace/платёжных систем.',
+    ex:'GMV (объём всех транзакций) = $500M, Revenue = $10M → Take Rate = 2%.'},
+
+  // ── Data Infrastructure (8) ──
+  {id:'dbt',name:'dbt',cat:'Data Infrastructure',full:'Data Build Tool — инструмент трансформации данных',
+    def:'SQL-модели в файлах, версионируемые в Git. Декларативный подход: пишешь SELECT, dbt сам создаёт таблицу.',
+    ex:'stg_transactions.sql: SELECT * FROM {{ source("raw","txns") }}. dbt сам решает — view, table или incremental.'},
+  {id:'dbt_ref',name:'ref() и source()',cat:'Data Infrastructure',full:'Функции зависимостей в dbt',
+    def:'source() — ссылка на сырые данные. ref() — ссылка на другую dbt-модель. Через них dbt строит граф зависимостей (lineage).',
+    ex:'marts/revenue.sql: SELECT ... FROM {{ ref("stg_transactions") }}. dbt знает, что сначала нужно stg, потом marts.'},
+  {id:'dbt_tests',name:'dbt Tests',cat:'Data Infrastructure',full:'Автоматические тесты данных в dbt',
+    def:'unique — нет дубликатов. not_null — нет пустых. accepted_values — только допустимые значения. Запускаются автоматически.',
+    ex:'schema.yml: tests: [unique, not_null] для transaction_id. Если дубль — pipeline падает, а не тихо ломает дашборд.'},
+  {id:'dbt_layers',name:'Staging → Marts',cat:'Data Infrastructure',full:'Слои данных в dbt',
+    def:'staging — очистка сырых данных. intermediate — промежуточные агрегации. marts — финальные витрины для дашбордов.',
+    ex:'raw.txns → stg_transactions (типы, фильтры) → int_daily_revenue (агрегация по дню) → mart_finance_daily (для Superset).'},
+  {id:'superset',name:'Apache Superset',cat:'Data Infrastructure',full:'Open-source BI инструмент',
+    def:'Бесплатный BI: пишешь SQL → строишь дашборды. Self-hosted. Основной инструмент Wallet для финансовых дашбордов.',
+    ex:'Superset vs Tableau: бесплатный, SQL-first, self-hosted. Vs Streamlit: не нужен Python, проще для бизнес-юзеров.'},
+  {id:'grafana',name:'Grafana',cat:'Data Infrastructure',full:'Инструмент мониторинга и алертов',
+    def:'Real-time дашборды + алерты. Когда метрика выходит за порог → уведомление в Slack.',
+    ex:'Alert: «Revenue за последний час < $5K» → Slack → дежурный аналитик проверяет. Grafana для мониторинга, Superset для аналитики.'},
+  {id:'clickhouse',name:'ClickHouse',cat:'Data Infrastructure',full:'Колоночная аналитическая база данных',
+    def:'Быстрые агрегации на миллиардах строк. Колоночное хранение = быстрый GROUP BY. Основная аналитическая БД Wallet.',
+    ex:'1B транзакций. GROUP BY product, date — 0.5 сек в ClickHouse vs 30 мин в PostgreSQL. Но JOIN-ы — слабое место.'},
+  {id:'openmetadata_vs_dbt',name:'OpenMetadata vs dbt',cat:'Data Infrastructure',full:'Каталог данных vs трансформация данных',
+    def:'dbt трансформирует данные (SQL → таблицы). OpenMetadata каталогизирует (что где лежит, кто владелец, lineage). Дополняют друг друга.',
+    ex:'dbt: «как приготовить блюдо». OpenMetadata: «меню ресторана — что есть, из чего, кто готовит». Денис внедрил OpenMetadata в Sletat.ru.'},
+
+  // ── Data Quality (6) ──
+  {id:'completeness',name:'Data Completeness',cat:'Data Quality',full:'Полнота данных',
+    def:'Процент заполненных полей. Неполные данные → неправильные метрики.',
+    ex:'95% транзакций имеют product_type. 5% — NULL. Если NULL-и все от одного провайдера — починить ETL.'},
+  {id:'freshness',name:'Data Freshness',cat:'Data Quality',full:'Свежесть данных',
+    def:'Время от события до появления в хранилище. Для финансовых дашбордов критично.',
+    ex:'Транзакция в 10:00, в ClickHouse в 10:05 → Freshness = 5 мин. CFO видит данные с задержкой 5 мин.'},
+  {id:'drift',name:'Data Drift',cat:'Data Quality',full:'Дрейф данных',
+    def:'Изменение распределения данных со временем. Может сигнализировать о проблеме или изменении бизнеса.',
+    ex:'Средний чек swap вырос с $50 до $200 за месяц — drift detected. Причина? Крупные юзеры или баг в расчёте?'},
+  {id:'consistency',name:'Data Consistency',cat:'Data Quality',full:'Консистентность данных между системами',
+    def:'Одни и те же метрики показывают одни и те же числа в разных источниках.',
+    ex:'Superset: Revenue $1.05M. Бухгалтерия: $1.02M. Разница $30K. Причина: pending транзакции. Нужен reconciliation.'},
+  {id:'messy_data',name:'Messy Data at Scale',cat:'Data Quality',full:'Работа с грязными высоконагруженными данными',
+    def:'Миллионы транзакций/день, разные статусы, дубликаты, расхождения. Твоя задача — чистые цифры для CFO.',
+    ex:'Статусы: pending→confirmed→settled→failed. Retry = дубли. Блокчейн ≠ провайдер. Задача: дедупликация + reconciliation.'},
+  {id:'data_monitoring',name:'Data Monitoring',cat:'Data Quality',full:'Мониторинг качества данных',
+    def:'Автоматические проверки: freshness, row count, null rate, value distribution. Алерт при отклонении.',
+    ex:'Ежечасная проверка: количество строк в stg_transactions. Если 0 строк за последний час → алерт → ETL сломался.'}
 ];
 
 // ─── STATE ───
-const LS_KEY = 'metrics_learn_v1';
+const LS_KEY = 'metrics_learn_v2';
 let state;
 
 function defaultState(){
   return {
-    cards:{}, // id -> {interval, nextReview (timestamp), mastered}
+    cards:{},
     quiz:{score:0,streak:0,bestStreak:0,total:0,correct:0},
     lastActive:Date.now(),
     dayStreak:0,
@@ -268,29 +455,23 @@ function defaultState(){
 
 function loadState(){
   let loaded=null;
-  // Try localStorage first
   try{loaded=JSON.parse(localStorage.getItem(LS_KEY))}catch(e){}
-  // Fallback: try sessionStorage
   if(!loaded){try{loaded=JSON.parse(sessionStorage.getItem(LS_KEY))}catch(e){}}
-  // Fallback: try URL hash
   if(!loaded&&location.hash.length>1){
     try{loaded=JSON.parse(decodeURIComponent(location.hash.slice(1)))}catch(e){}
   }
   state=loaded||defaultState();
-  // Ensure cards object exists (migration safety)
   if(!state.cards)state.cards={};
   if(!state.quiz)state.quiz={score:0,streak:0,bestStreak:0,total:0,correct:0};
-  // update day streak
   const today=new Date().toDateString();
   if(!state.lastDay){
-    state.dayStreak=1; // first visit
+    state.dayStreak=1;
   }else if(state.lastDay!==today){
     const last=new Date(state.lastDay),now=new Date(today);
     const diff=Math.round((now-last)/(1000*60*60*24));
     if(diff===1)state.dayStreak=(state.dayStreak||0)+1;
-    else if(diff>1)state.dayStreak=1; // reset but count today
+    else if(diff>1)state.dayStreak=1;
   }
-  // ensure at least 1 if active today
   if(!state.dayStreak)state.dayStreak=1;
   state.lastDay=today;
   saveState();
@@ -301,7 +482,6 @@ function saveState(){
   const json=JSON.stringify(state);
   try{localStorage.setItem(LS_KEY,json)}catch(e){}
   try{sessionStorage.setItem(LS_KEY,json)}catch(e){}
-  // Save compact version to hash (only card states + quiz, skip heavy stuff)
   try{
     const compact={cards:state.cards,quiz:state.quiz,dayStreak:state.dayStreak,lastDay:state.lastDay};
     history.replaceState(null,'','#'+encodeURIComponent(JSON.stringify(compact)));
@@ -327,7 +507,6 @@ function buildDeck(){
     const cs=getCardState(m.id);
     return !cs.mastered||cs.nextReview<=now;
   });
-  // sort: needs review first, then by nextReview
   deck.sort((a,b)=>{
     const ca=getCardState(a.id),cb=getCardState(b.id);
     if(ca.mastered!==cb.mastered)return ca.mastered?1:-1;
@@ -402,7 +581,6 @@ function attachCardEvents(el){
     const clampedRot=Math.max(-15,Math.min(15,rot));
     el.style.transform=`translateX(${currentX}px) rotate(${clampedRot}deg)`;
 
-    // overlays
     const likeOv=el.querySelector('.card-overlay.like');
     const nopeOv=el.querySelector('.card-overlay.nope');
     const pct=Math.min(Math.abs(currentX)/120,1);
@@ -445,7 +623,6 @@ function flipCard(){
   isFlipped=!isFlipped;
   if(isFlipped)cardEl.classList.add('flipped');
   else cardEl.classList.remove('flipped');
-  // haptic pulse
   cardEl.classList.add('pulse');
   setTimeout(()=>cardEl.classList.remove('pulse'),150);
 }
@@ -460,10 +637,10 @@ function flyCard(dir){
   if(dir==='right'){
     cs.interval=Math.min(cs.interval*2,64);
     cs.nextReview=Date.now()+cs.interval*24*60*60*1000;
-    cs.mastered=cs.interval>=2; // mastered after first confident swipe
+    cs.mastered=cs.interval>=2;
   }else{
     cs.interval=1;
-    cs.nextReview=Date.now()+60*1000; // come back in 1 min
+    cs.nextReview=Date.now()+60*1000;
     cs.mastered=false;
   }
   saveState();
@@ -530,24 +707,43 @@ let quizAnswered=false;
 function generateQuizQuestion(){
   quizAnswered=false;
   document.getElementById('quizNext').classList.remove('visible');
-  const nameToDefMode=Math.random()>0.5;
+
+  // Mix question types: name→def, def→name, example→name, category→metrics
+  const questionType=Math.random();
   const m=METRICS[Math.floor(Math.random()*METRICS.length)];
   const qLabel=document.getElementById('qLabel');
   const qText=document.getElementById('qText');
 
   let correctAnswer,options;
-  if(nameToDefMode){
+
+  if(questionType<0.3){
+    // Name → Definition
     qLabel.textContent='Что это за метрика?';
-    qText.textContent=m.name;
+    qText.textContent=m.name+(m.full!==m.name?' ('+m.full+')':'');
     correctAnswer=m.def;
     const others=METRICS.filter(x=>x.id!==m.id).sort(()=>Math.random()-.5).slice(0,3).map(x=>x.def);
     options=[correctAnswer,...others].sort(()=>Math.random()-.5);
-  }else{
-    qLabel.textContent='Определение';
+  }else if(questionType<0.6){
+    // Definition → Name
+    qLabel.textContent='Какая метрика описана?';
     qText.textContent=m.def;
     correctAnswer=m.name;
     const others=METRICS.filter(x=>x.id!==m.id).sort(()=>Math.random()-.5).slice(0,3).map(x=>x.name);
     options=[correctAnswer,...others].sort(()=>Math.random()-.5);
+  }else if(questionType<0.8){
+    // Example → Name
+    qLabel.textContent='К какой метрике этот пример?';
+    qText.textContent=m.ex;
+    correctAnswer=m.name;
+    const others=METRICS.filter(x=>x.id!==m.id&&x.cat!==m.cat).sort(()=>Math.random()-.5).slice(0,3).map(x=>x.name);
+    options=[correctAnswer,...others].sort(()=>Math.random()-.5);
+  }else{
+    // Category question
+    qLabel.textContent='К какой категории относится?';
+    qText.textContent=m.name+' — '+m.full;
+    correctAnswer=m.cat;
+    const otherCats=Object.keys(CATEGORIES).filter(c=>c!==m.cat).sort(()=>Math.random()-.5).slice(0,3);
+    options=[correctAnswer,...otherCats].sort(()=>Math.random()-.5);
   }
 
   const wrap=document.getElementById('quizOptions');
@@ -575,10 +771,8 @@ function quizAnswer(el){
     el.classList.add('wrong');
     el.classList.add('shake');
     state.quiz.streak=0;
-    // flag for review
     const cs=getCardState(metricId);
     cs.interval=1;cs.nextReview=0;cs.mastered=false;
-    // highlight correct
     document.querySelectorAll('.quiz-opt').forEach(o=>{
       if(o.dataset.correct==='1')o.classList.add('correct');
       else if(!o.classList.contains('wrong'))o.classList.add('dimmed');
@@ -639,7 +833,6 @@ function renderProgressTab(){
 
 // ─── TABS ───
 function switchTab(el){
-  // Accept string or DOM element
   if(typeof el==='string'){
     el=document.querySelector(`.tab[data-tab="panel${el.charAt(0).toUpperCase()+el.slice(1)}"]`)||
        document.querySelector(`.tab[data-tab="${el}"]`);
